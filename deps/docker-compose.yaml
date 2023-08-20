@@ -1,0 +1,70 @@
+version: '3.9'
+
+networks:
+  devcontainerdemonet:
+    external: true
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:15-alpine
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=root
+    networks:
+      - devcontainerdemonet
+  pgadmin:
+    container_name: pgadmin4
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "5050:80"
+    networks:
+      - devcontainerdemonet
+  grafana:
+    image: grafana/grafana
+    ports:
+      - 3000:3000
+    networks:
+      - devcontainerdemonet
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - devcontainerdemonet
+  redis:
+    container_name: redis
+    image: 'bitnami/redis:7.2.0'
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - &redis-password REDIS_PASSWORD=root
+    volumes:
+      - redis-data:/bitnami/redis/data
+    networks:
+      - devcontainerdemonet
+  redis-exporter:
+    container_name: redis_exporter
+    image: oliver006/redis_exporter
+    ports:
+      - 9121:9121
+    environment:
+      <<: *redis-password
+      REDIS_ADDR: "redis:6379"
+      REDIS_USER: null
+    networks:
+      - devcontainerdemonet
+volumes:
+  postgres-data:
+    name: postgres-data
+  redis-data:
+    name: redis-data
