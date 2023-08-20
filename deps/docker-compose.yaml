@@ -13,8 +13,8 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=root
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=example
     networks:
       - devcontainerdemonet
   pgadmin:
@@ -28,6 +28,14 @@ services:
       - "5050:80"
     networks:
       - devcontainerdemonet
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    ports:
+      - 9187:9187
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:postgres@postgres:5432/example?sslmode=disable"
+    networks:
+      - devcontainerdemonet
   grafana:
     image: grafana/grafana
     ports:
@@ -39,7 +47,7 @@ services:
     ports:
       - 9090:9090
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
     networks:
       - devcontainerdemonet
   redis:
@@ -47,7 +55,7 @@ services:
     image: 'bitnami/redis:7.2.0'
     environment:
       - REDIS_REPLICATION_MODE=master
-      - &redis-password REDIS_PASSWORD=root
+      - REDIS_PASSWORD=root
     volumes:
       - redis-data:/bitnami/redis/data
     networks:
@@ -58,9 +66,9 @@ services:
     ports:
       - 9121:9121
     environment:
-      <<: *redis-password
       REDIS_ADDR: "redis:6379"
       REDIS_USER: null
+      REDIS_PASSWORD: root
     networks:
       - devcontainerdemonet
 volumes:
